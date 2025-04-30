@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>AI Voice Assistant</title>
+</head>
+
+<body>
+    <h1>Digital Dost</h1>
+
+    <button onclick="startListening()">🎤</button>
+    <form method="post" id="askForm">
+        <input type="text" name="question" id="questionInput" placeholder="Or type your question..." required>
+        <input type="submit" value="Submit">
+    </form>
+
+    {% if response %}
+    <h3>Response:</h3>
+    <p id="responseText">{{ response }}</p>
+    <script>
+        const response = `{{ response }}`;
+        const synth = window.speechSynthesis;
+        const utterance = new SpeechSynthesisUtterance(response);
+        synth.speak(utterance);
+    </script>
+    {% endif %}
+
+    <script>
+        function startListening() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = 'en-IN';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.start();
+
+            recognition.onresult = function (event) {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById("questionInput").value = transcript;
+                document.getElementById("askForm").submit();
+            };
+
+            recognition.onerror = function (event) {
+                alert("Voice input error: " + event.error);
+            };
+        }
+    </script>
+</body>
+
+</html>
