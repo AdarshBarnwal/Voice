@@ -3,29 +3,61 @@
 
 <head>
     <title>AI Voice Assistant</title>
+    <style>
+        #chatBox {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+        }
+
+        .user {
+            color: blue;
+        }
+
+        .bot {
+            color: green;
+        }
+
+        button {
+            margin-top: 10px;
+            margin-right: 5px;
+        }
+    </style>
 </head>
 
 <body>
     <h1>Digital Dost</h1>
 
-    <button onclick="startListening()">🎤</button>
+    <div id="chatBox">
+        {% for message in chat_history %}
+        <div class="message">
+            <strong class="user">You:</strong> {{ message.user }}<br>
+            <strong class="bot">Bot:</strong> {{ message.bot }}
+        </div>
+        {% endfor %}
+    </div>
+
     <form method="post" id="askForm">
-        <input type="text" name="question" id="questionInput" placeholder="Or type your question..." required>
+        <input type="text" name="question" id="questionInput" placeholder="Type your question..." required>
         <input type="submit" value="Submit">
     </form>
 
-    {% if response %}
-    <h3>Response:</h3>
-    <p id="responseText">{{ response }}</p>
-    <script>
-        const response = `{{ response }}`;
-        const synth = window.speechSynthesis;
-        const utterance = new SpeechSynthesisUtterance(response);
-        synth.speak(utterance);
-    </script>
-    {% endif %}
+    <button onclick="startListening()">🎤 Speak</button>
+    <button onclick="stopSpeaking()">🔇 Stop Voice</button>
+    <form method="post" action="/reset" style="display: inline;">
+        <button type="submit">🔁 Reset Chat</button>
+    </form>
+
 
     <script>
+        let synth = window.speechSynthesis;
+        let utterance;
+
         function startListening() {
             const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             recognition.lang = 'en-IN';
@@ -35,16 +67,28 @@
             recognition.start();
 
             recognition.onresult = function (event) {
-                const transcript = event.results[0][0].transcript;
-                document.getElementById("questionInput").value = transcript;
+                const question = event.results[0][0].transcript;
+                document.getElementById("questionInput").value = question;
                 document.getElementById("askForm").submit();
             };
+        }
 
-            recognition.onerror = function (event) {
-                alert("Voice input error: " + event.error);
-            };
+        function stopSpeaking() {
+            if (synth.speaking) {
+                synth.cancel();
+            }
         }
     </script>
+
+    {% if chat_history %}
+    {% set last_message = chat_history[-1] %}
+    <script>
+        const lastBotMessage = `{{ last_message.bot | e | replace('\n', ' ') }}`;
+        utterance = new SpeechSynthesisUtterance(lastBotMessage);
+        synth.speak(utterance);
+    </script>
+    {% endif %}
+
 </body>
 
 </html>
